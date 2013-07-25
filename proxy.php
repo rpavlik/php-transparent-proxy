@@ -8,10 +8,8 @@
 /--------------------------------------------------------------*/
 
 // Destination URL: Where this proxy leads to.
-$destinationURL = 'http://www.otherdomain.com/backend.php';
+$destinationURL = 'http://www.google.com/calendar/ical/rpavlik%40iastate.edu/public/basic.ics';
 
-// The only domain from which requests are authorized.
-$RequestDomain = 'mydomain.com';
 
 // That's it for configuration!
 
@@ -46,22 +44,15 @@ $host = $matches[1];
 preg_match('/[^.]+\.[^.]+$/', $host, $matches);
 $domainName = "{$matches[0]}";
 
-if($domainName == $RequestDomain) {
+$method = $_SERVER['REQUEST_METHOD'];
+$response = proxy_request($destinationURL, ($method == "GET" ? $_GET : $_POST), $method);
+$headerArray = explode("\r\n", $response[header]);
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    $response = proxy_request($destinationURL, ($method == "GET" ? $_GET : $_POST), $method);
-    $headerArray = explode("\r\n", $response[header]);
+foreach($headerArray as $headerLine) {
+ header($headerLine);
+}
+echo(preg_replace('/VFREEBUSY/', "VEVENT", $response[content]));
 
-    foreach($headerArray as $headerLine) {
-     header($headerLine);
-    }
-    echo $response[content];
- 
-  } else {
-
-    echo "HTTP Referer is not recognized. Cancelling all actions";
-
-  }
 
 function proxy_request($url, $data, $method) {
 // Based on post_request from http://www.jonasjohn.de/snippets/php/post-request.htm
